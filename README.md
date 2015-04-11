@@ -17,6 +17,8 @@ This fork contains a number of additions and changes I have found educational or
 
 * Conversion to SPI library from https://github.com/rsbohn/ArduinoISP
 
+* Change AtmelBoardDetector reset from an inline assembler jump to using the watchdog timer as shown in https://github.com/WickedDevice/SoftReset.  This is considered "more correct" by some on AVRFreaks, but may cause problems with early versions of the Optiboot bootloader... haven't seen an issue myself yet, but be aware.
+
 ### Additions
 
 In addition to the above sources, I have cleaned up some of the code, transitioned to more explicit variable typing, and added some space saving measures.
@@ -27,28 +29,28 @@ See ASM_ISP.h for the following:
 
 * ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
 
-  This saves roughly 300 bytes, and was introduced before I was certain the Board Detector and Fuse Calculator would safely fit together within 32k. It uses DDRx and PORTx manipulation for most pin access, so if you change the pins, or use on an untested board,  then either comment out this line or edit the appropriate places in ASM_ISP.ino and ABD.cpp.  I may remove it in the future as the savings is so small, but we'll see if I can squeeze it any more.
+  This saves roughly 300 bytes, and was introduced before I was certain the Board Detector and Fuse Calculator would safely fit together within 32k. It uses DDRx and PORTx manipulation for most pin access, so if you change the pins, or use on an untested board,  then either comment out this line or edit the appropriate places in ASM_ISP.ino and ABD.cpp.  I may remove this in the future as the savings is so small, but we'll see if I can squeeze it any more.
 
 * STRIP_ABD
 
-  To really cut down on space, strip the Board Detector and Fuse Calculator out... defeats my current purposes, but since I do include the SPI fixes and clock pin, someday I might want just the AVRISP portion of this code...  Saves roughly 18000 bytes.
-       
+  To really cut down on space, strip the Board Detector and Fuse Calculator out... defeats my current purposes, but since I do include the SPI fixes and clock pin, someday I might want just the AVRISP portion of the code...  Saves roughly 18000 bytes.
+ 
 The pins are also defined in ASM_ISP.h:
 
-     slave reset:    10
-     MOSI:           11
-     MISO:           12
-     SCK:            13
+    slave reset:    10
+    MOSI:           11
+    MISO:           12
+    SCK:            13
 
-     CLOCK_1MHZ       3 - For use with chips which are not on an Arduino board
+    CLOCK_1MHZ       3 - For use with chips which are not on an Arduino board
 
-     Heartbeat LED    9 - shows the programmer is running (Green on my board)
-     Error LED        8 - Lights up if something goes wrong (Red on my board)
-     Programming LED  7 - In communication with the slave (Yellow on my board)
+    Heartbeat LED    9 - shows the programmer is running (Green on my board)
+    Error LED        8 - Lights up if something goes wrong (Red on my board)
+    Programming LED  7 - In communication with the slave (Yellow on my board)
 
-     Piezo speaker   A0 - What can I say? I like confirmation beeps
+    Piezo speaker   A0 - What can I say? I like confirmation beeps
 
-     ABD_SELECTOR     6 - toggle to ground to activate Board Detection
+    ABD_SELECTOR     6 - toggle to ground to activate Board Detection
 
 ### Schematic
 
