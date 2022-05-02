@@ -1,13 +1,6 @@
 #ifndef _ASM_ISP_H
 #define _ASM_ISP_H
 
-// ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
-//    This saves roughly 300 bytes, and was introduced before I was certain the Board Detector
-//    and Fuse Calculator would safely fit together within 32k. It uses DDRx and PORTx manipulation
-//    for most pin access, so if you change the pins, or use on an untested board,  then either
-//    comment out this line or edit the appropriate places in ASM_ISP.ino and ABD.cpp.
-#define ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
-
 // STRIP_ABD
 //    To really cut down on space, strip the Board Detector and Fuse Calculator out... defeats
 //    my purposes, but since I do include the SPI fixes and clock pin, someone else might want

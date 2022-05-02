@@ -714,22 +714,14 @@ void readProgram() {
 bool startProgramming()
   {
   Serial.print(F("Attempting to enter programming mode ...")) ;
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
   digitalWrite(RESET, HIGH) ;  // ensure SS stays high for now
-#else
-  PORTB |= B00000100 ;
-#endif
   SPI.begin() ;
   SPI.setClockDivider(SPI_CLOCK_DIV64) ;
 
   uint8_t confirm ;
 
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
   pinMode(RESET, OUTPUT) ;
   pinMode(SCK, OUTPUT) ;
-#else
-  DDRB |= B00100100 ;
-#endif
 
   uint8_t  timeout = 0 ;
 
@@ -738,17 +730,10 @@ bool startProgramming()
     delay(100) ;
 
     // ensure SCK low then pulse reset, see page 309 of datasheet
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
     digitalWrite(SCK, LOW) ;
     digitalWrite(RESET, HIGH) ;
     delay(1) ;  // pulse for at least 2 clock cycles
     digitalWrite(RESET, LOW) ;
-#else
-    PORTB |=  B00000100 ;
-    PORTB &= ~B00100000 ;
-    delay(1) ;  // pulse for at least 2 clock cycles
-    PORTB &= ~B00000100 ;
-#endif
 
     delay(25) ;  // wait at least 20 mS
     SPI.transfer(progamEnable) ;
@@ -873,12 +858,8 @@ void detectBoard() {
 
     readProgram() ;
   }   // end of if entered programming mode OK
-  
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
+
   digitalWrite(RESET, HIGH) ;  //Disables reset line to secondary processor...
-#else
-  PORTB |= B00000100 ;
-#endif
 
   SPI.end() ;
 
@@ -887,11 +868,7 @@ void detectBoard() {
 //  Serial.print(" DDRD: ") ; showBinary(DDRD) ; Serial.print("  PORTD: ") ; showBinary(PORTD, true) ;
 
  // only need to see output once, so wait till switch released.
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
   while (digitalRead(ABD_SELECTOR) == LOW) ;
-#else
-  while (!(PIND & B01000000)) ;
-#endif
 
   delay(20) ; // make sure serial output complete before we chop it off...
   softwareReset() ;

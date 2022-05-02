@@ -23,18 +23,12 @@ This fork contains a number of additions and changes I have found educational or
 
 In addition to the above sources, I have cleaned up some of the code, transitioned to more explicit variable typing, and added some space saving measures.
 
-Again, to reiterate, this has only been tested on an Arduino UNO R3.  If you run this on another version or change pins, you'll probably want to comment out  `#define ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP` in ASM_ISP.h initially to verify it works for you -- this is the only code that I know for certain deviates from the more generic sources I pulled code from.
-
 See ASM_ISP.h for the following:
-
-* ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
-
-  This saves roughly 300 bytes, and was introduced before I was certain the Board Detector and Fuse Calculator would safely fit together within 32k. It uses DDRx and PORTx manipulation for most pin access, so if you change the pins, or use on an untested board,  then either comment out this line or edit the appropriate places in ASM_ISP.ino and ABD.cpp.  I may remove this in the future as the savings is so small, but we'll see if I can squeeze it any more.
 
 * STRIP_ABD
 
   To really cut down on space, strip the Board Detector and Fuse Calculator out... defeats my current purposes, but since I do include the SPI fixes and clock pin, someday I might want just the AVRISP portion of the code...  Saves roughly 18000 bytes.
- 
+
 The pins are also defined in ASM_ISP.h:
 
     slave reset:    10

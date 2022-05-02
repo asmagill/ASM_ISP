@@ -3,19 +3,9 @@
 // Copyright 2015 Aaron Magill -- MIT LICENSE -- see LICENSE file for text of license
 // Portions hold other copyrights -- see LICENSE file for details
 
-// This has only been tested on an UNO R3.  If you run this on another platform or change pins,
-// you'll probably want to comment out ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP in ASM_ISP.h initially
-// to verify it works for you -- this is the only code that I know for certain deviates from the
-// more generic sources I pulled code from.
-
+// This has only been tested on an UNO R3.
 // See ASM_ISP.h for the following:
-//
-// ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
-//    This saves roughly 300 bytes, and was introduced before I was certain the Board Detector
-//    and Fuse Calculator would safely fit together within 32k. It uses DDRx and PORTx manipulation
-//    for most pin access, so if you change the pins, or use on an untested board,  then either
-//    comment out this line or edit the appropriate places in ASM_ISP.ino and ABD.cpp.
-//
+////
 // STRIP_ABD
 //    To really cut down on space, strip the Board Detector and Fuse Calculator out... defeats
 //    my purposes, but since I do include the SPI fixes and clock pin, someone else might want
@@ -163,25 +153,9 @@ void readbytes(uint8_t n) { //**
 // #define PTIME 50
 void pulse(uint8_t pin, uint8_t times, uint32_t ptime) { //**
   do {
-//#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP    // Not smaller than code below.
     digitalWrite(pin, HIGH);
     delay(ptime);
     digitalWrite(pin, LOW);
-//#else
-//    switch (pin) {
-//      case 7: PORTD |= B10000000 ; break ;
-//      case 8: PORTB |= B00000001 ; break ;
-//      case 9: PORTB |= B00000010 ; break ;
-//      default: break ;
-//    }
-//    delay(ptime) ;
-//    switch (pin) {
-//      case 7: PORTD &= ~B10000000 ; break ;
-//      case 8: PORTB &= ~B00000001 ; break ;
-//      case 9: PORTB &= ~B00000010 ; break ;
-//      default: break ;
-//    }
-//#endif
     delay(ptime);
     times--;
   }
@@ -193,11 +167,7 @@ void pulse(uint8_t pin, uint8_t times) { //**
 
 void prog_lamp(uint8_t state) { //**
   if (PROG_FLICKER)
-//#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP    // Not smaller than code below.
     digitalWrite(LED_PMODE, state);
-//#else
-//    PORTD = state ? (PORTD | B10000000) : (PORTD & ~B10000000) ;
-//#endif
 }
 
 uint8_t spi_transaction(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
@@ -281,32 +251,19 @@ void set_parameters() {
 void start_pmode() {
   preSPI_DDRB = DDRB ; preSPI_PORTB = PORTB ;
   SPI.begin() ;
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
   digitalWrite(RESET, HIGH) ;
   pinMode(RESET, OUTPUT) ;
   pinMode(SCK, OUTPUT) ;
   delay(20);
   digitalWrite(RESET, LOW);
-#else
-  PORTB |= B00000100 ;
-  DDRB |= B00000100 ;
-  PORTB &= ~B00100000 ;
-  delay(20);
-  PORTB &= ~B00000100 ;
-#endif
   spi_transaction(0xAC, 0x53, 0x00, 0x00);
   pmode = 1;
 }
 
 void end_pmode() {
   SPI.end();
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
   digitalWrite(RESET, HIGH);
   pinMode(RESET, INPUT);
-#else
-  PORTB |= B00000100 ;
-  DDRB &= ~B00000100 ;
-#endif
   pmode = 0;
   DDRB = preSPI_DDRB ; PORTB = preSPI_PORTB ;
 }
@@ -467,17 +424,9 @@ void read_signature() {
 void beep(uint16_t tone, uint16_t duration){ //**
   uint16_t elapsed = 0; //**
   while (elapsed < (duration * 10000)) {
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
     digitalWrite(PIEZO, HIGH);
-#else
-    PORTC |= B00000001 ;  // A0
-#endif
     delayMicroseconds(tone / 2);
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
     digitalWrite(PIEZO, LOW);
-#else
-    PORTC &= ~B00000001 ;  // A0
-#endif
     delayMicroseconds(tone / 2);
     // Keep track of how long we pulsed
     elapsed += tone;
@@ -601,11 +550,7 @@ void getEOP() {
       heartbeat(); //delay(10) ;            // light the heartbeat LED
 
 #ifndef STRIP_ABD
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
       if (digitalRead(ABD_SELECTOR) == LOW && !pmode) { softwareReset(); }
-#else
-      if (!(PIND & B01000000) && !pmode) { softwareReset(); }
-#endif /* ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP */
 #endif /* STRIP_ABD */
 
     }
@@ -625,23 +570,18 @@ void setup() {
 
 // Set up pins
 
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
-// Portable, but uses more bytes.  If pin defs change above, this will need to be used or code below changed.
   pinMode(LED_PMODE,    OUTPUT);
   pinMode(LED_ERR,      OUTPUT);
   pinMode(LED_HB,       OUTPUT);
   pinMode(PIEZO,        OUTPUT);
+
+#ifndef STRIP_ABD
   pinMode(ABD_SELECTOR, INPUT_PULLUP);
+#endif
+
   // .kbv these next statements provide a 1MHz clock signal on pin 3
   // DDRD |= (1 << 3);                    // make pin 3 an output (equiv to DDRD = DDRD | B00001000)
   pinMode(CLOCK_1MHZ, OUTPUT) ;           // same as above, but more portable, we don't care about timing yet, and don't have to worry about D versus B if CLOCK_1MHZ > 7)
-#else
-// Less portable, but saves space.  Change this if pins change, or comment out ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP at top of file
-  DDRB  |= B00000011 ;                     // D9,D8 = OUTPUT
-  DDRD = (DDRD | B10001000) & ~B01000000 ; // D7,D3 = OUTPUT, D6 = INPUT
-  PORTD |= B01000000 ;                     // D6 = INPUT_PULLUP
-  DDRC  |= B00000001 ;                     // A3 = OUTPUT
-#endif
 
 // End of pin setup
 
@@ -653,16 +593,10 @@ void setup() {
 
 #ifndef STRIP_ABD
 
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
   if (digitalRead(ABD_SELECTOR) == LOW) {
     digitalWrite(LED_PMODE, HIGH) ;
     digitalWrite(LED_ERR, HIGH) ;
     digitalWrite(LED_HB, HIGH) ;
-#else
-  if (!(PIND & B01000000)) {
-    PORTB |= B00000011 ;
-    PORTD |= B10000000 ;
-#endif /* ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP */
     detectBoard();
   } else {
 #endif /* STRIP_ABD */
@@ -692,23 +626,14 @@ void setup() {
 // Loopy loopy
 
 void loop(void) {
-//#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP    // Not smaller than code below.
   digitalWrite(LED_PMODE, pmode ? HIGH : LOW) ; // is pmode active?
   digitalWrite(LED_ERR,   error ? HIGH : LOW) ; // is there an error?
-//#else
-//  PORTD = pmode ? (PORTD | B10000000) : (PORTD & ~B10000000) ;
-//  PORTB = error ? (PORTB | B00000001) : (PORTB & ~B00000001) ;
-//#endif /* ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP */
 
   getEOP();  // <-- Put loop stuff like Heartbeat, ABD_SELECTOR check, etc. in getEOP() above.
 
   // have we received a complete request?  (ends with CRC_EOP)
   if (EOP_SEEN) {
-#ifndef ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP
     digitalWrite(LED_PMODE, HIGH);
-#else
-  PORTD |= B10000000 ;
-#endif /* ANAL_SPACE_SAVING_BUT_HARD_PIN_SETUP */
     EOP_SEEN = false;
     avrisp();
     iBuffer = pBuffer = 0;  // restart buffer
